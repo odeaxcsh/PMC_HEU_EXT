@@ -9,9 +9,9 @@ using namespace kcm;
 
 TEST(KCore, Simple)
 {
-    auto g = std::make_shared<Graph>(5);
+    auto g = Graph(5);
     for(Node i = 0; i < 4; ++i) {
-        g->add_edge(i, i + 1, Weight(0.5));
+        g.add_edge(i, i + 1, Weight(0.5));
     }
 
     KCore k(g);
@@ -23,10 +23,10 @@ TEST(KCore, Simple)
 
 TEST(KCore, CompleteGraph)
 {
-    auto g = std::make_shared<Graph>(5);
+    auto g = Graph(5);
     for(Node i = 0; i < 5; ++i) {
         for(Node j = 0; j < i; ++j) {
-            g->add_edge(i, j, Weight(0.1));
+            g.add_edge(i, j, Weight(0.1));
         }
     }
 
@@ -39,9 +39,9 @@ TEST(KCore, CompleteGraph)
 
 TEST(KCore, AddEdge)
 {
-    auto g = std::make_shared<kcm::Graph>(5);
+    auto g = Graph(5);
     for(Node i = 0; i < 4; ++i) {
-        g->add_edge(i, i + 1, Weight(0.5));
+        g.add_edge(i, i + 1, Weight(0.5));
     }
 
     kcm::KCore k(g);

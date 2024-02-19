@@ -2,6 +2,7 @@
 #include <ranges>
 #include <iostream>
 #include <stack>
+#include <ranges>
 
 
 namespace kcm
@@ -15,6 +16,10 @@ size_t Graph::size() const
 
 Graph &Graph::add_edge(Node u, Node v, Weight w)
 {
+    if(neighborhoods[u].find(v) != neighborhoods[u].end()) {
+        remove_edge(u, v);
+    }
+    
     neighborhoods[u][v] = w;
     neighborhoods[v][u] = w;
 
@@ -92,5 +97,14 @@ std::vector<bool> Graph::DFS(Node root, std::function<bool(Node, Node, Weight)> 
 
     return visisted;
 }
+
+std::vector<Node> Graph::neighbor_nodes(Node u) const
+{
+    auto neighbors = std::views::keys(neighborhoods[u]);
+
+
+    return std::vector<Node>(neighbors.begin(), neighbors.end());
+}
+
 
 }

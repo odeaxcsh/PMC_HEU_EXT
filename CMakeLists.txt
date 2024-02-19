@@ -12,6 +12,8 @@ FILE(GLOB SOURCES "${PROJECT_SOURCE_DIR}/src/*")
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
 add_library(heulib ${SOURCES})
+add_executable(main main.cpp)
+target_link_libraries(main heulib)
 
 option(WITH_TEST "BUILD THE TEST CODE" ON)
 

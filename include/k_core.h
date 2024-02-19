@@ -12,7 +12,7 @@ namespace kcm
 class KCore
 {
 public:    
-    KCore(std::shared_ptr<Graph> g) : graph(g), k_core_number(graph->size()) 
+    KCore(Graph &g) : graph(g), k_core_number(graph.size()) 
     {
         calculate_initial_k_cores();
     };
@@ -39,7 +39,7 @@ private:
     
 
 private:
-    std::shared_ptr<Graph> graph;
+    Graph &graph;
     std::vector<Weight> k_core_number;
 };
 

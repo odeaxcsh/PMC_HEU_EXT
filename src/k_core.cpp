@@ -11,7 +11,7 @@ namespace kcm
 
 KCore &KCore::remove_edge(Node u, Node v)
 {
-    auto w_opt = graph->get_edge(u, v);
+    auto w_opt = graph.get_edge(u, v);
     if(!w_opt.has_value()) {
         return *this;
     }
@@ -25,18 +25,18 @@ KCore &KCore::remove_edge(Node u, Node v)
     std::vector<Weight> cd;
     std::vector<bool> visisted;
     if(k_core_number[v] - k_core_number[u] >= w) {
-        graph->remove_edge(u, v);
+        graph.remove_edge(u, v);
         std::tie(subcore, visisted, cd) = remove_subcore(u, w);
     } else {
         std::tie(subcore, visisted, cd) = remove_subcore(u, w);
-        graph->remove_edge(u, v);
+        graph.remove_edge(u, v);
         cd[u] = cd[u] - w;
         cd[v] = cd[v] - w;
         subcore.remove_edge(u, v);
     }
 
     // update with subcore:
-    std::vector<Node> ordered_nodes(graph->size(), 0);
+    std::vector<Node> ordered_nodes(graph.size(), 0);
     std::iota(ordered_nodes.begin(), ordered_nodes.end(), 0);
 
     std::stable_sort(ordered_nodes.begin(), ordered_nodes.end(), [=](Node i, Node j){
@@ -75,7 +75,7 @@ KCore &KCore::remove_edge(Node u, Node v)
 
 KCore &KCore::add_edge(Node u, Node v, Weight w)
 {
-    graph->add_edge(u, v, w);
+    graph.add_edge(u, v, w);
 
     if(k_core_number[u] > k_core_number[v]) {
         std::swap(u, v);
@@ -83,7 +83,7 @@ KCore &KCore::add_edge(Node u, Node v, Weight w)
     
     auto [subcore, visisted, cd] = add_subcore(u, w);
 
-    std::vector<Node> ordered_nodes(graph->size(), 0);
+    std::vector<Node> ordered_nodes(graph.size(), 0);
     std::iota(ordered_nodes.begin(), ordered_nodes.end(), 0);
 
     // increasing order
@@ -124,11 +124,11 @@ KCore &KCore::add_edge(Node u, Node v, Weight w)
 
 std::tuple<Graph, std::vector<bool>, std::vector<Weight>> KCore::remove_subcore(Node r, Weight w)
 {
-    std::vector<Weight> cd(graph->size(), 0);
+    std::vector<Weight> cd(graph.size(), 0);
 
-    auto output = Graph(graph->size());
+    auto output = Graph(graph.size());
 
-    auto visisted = graph->DFS(r, [&](Node node, Node neighbor, Weight weight) {
+    auto visisted = graph.DFS(r, [&](Node node, Node neighbor, Weight weight) {
         if(k_core_number[neighbor] > k_core_number[r] - w) {
             cd[node] += weight;
             if(k_core_number[neighbor] <= k_core_number[r]) {
@@ -145,11 +145,11 @@ std::tuple<Graph, std::vector<bool>, std::vector<Weight>> KCore::remove_subcore(
 
 std::tuple<Graph, std::vector<bool>, std::vector<Weight>> KCore::add_subcore(Node r, Weight w)
 {
-    std::vector<Weight> cd(graph->size(), 0);
+    std::vector<Weight> cd(graph.size(), 0);
     
-    auto output = Graph(graph->size());
+    auto output = Graph(graph.size());
 
-    auto visisted = graph->DFS(r, [&](Node node, Node neighbor, Weight weight) {
+    auto visisted = graph.DFS(r, [&](Node node, Node neighbor, Weight weight) {
         if(k_core_number[neighbor] >= k_core_number[r]) {
             cd[node] += weight;
             if(k_core_number[neighbor] < k_core_number[r] + w) {
@@ -167,9 +167,9 @@ std::tuple<Graph, std::vector<bool>, std::vector<Weight>> KCore::add_subcore(Nod
 void KCore::calculate_initial_k_cores()
 {
     // only cause std::priority queue donsn't support decrese-key
-    std::vector<bool> removed(graph->size(), false);
+    std::vector<bool> removed(graph.size(), false);
 
-    auto degrees = graph->degrees();
+    auto degrees = graph.degrees();
 
     // value: Degree / key: Node
     using HeapElement = std::tuple<Degree, Node>; 
@@ -178,7 +178,7 @@ void KCore::calculate_initial_k_cores()
         HeapElement, std::vector<HeapElement>, std::greater<HeapElement>
     > queue;
 
-    for(auto node : graph->nodes()) {
+    for(auto node : graph.nodes()) {
         queue.push({degrees[node], node});
     }
 
@@ -190,13 +190,12 @@ void KCore::calculate_initial_k_cores()
         if(removed[node]) { // decrece key instead of this
             continue;
         }
-
         removed[node] = true;
 
         k = std::max(k, degrees[node]);        
         k_core_number[node] = k;
 
-        for(auto &[neighbor, weight] : graph->neighbors(node)) {
+        for(auto &[neighbor, weight] : graph.neighbors(node)) {
             degrees[neighbor] -= weight;
             queue.push({degrees[neighbor], neighbor}); // decrece key instead
         }

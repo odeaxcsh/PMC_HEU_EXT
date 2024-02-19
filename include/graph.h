@@ -23,8 +23,6 @@ using NeighborsMap = std::map<Node, Weight>;
 class Graph
 {
 public:
-    static Graph from_edge_list(const std::vector<std::pair<Node, Weight>> &);
-
     Graph(size_t n) : neighborhoods(n), _degrees(n) {}
 
 
@@ -54,6 +52,8 @@ public:
     {
         return neighborhoods[u];
     }
+
+    std::vector<Node> neighbor_nodes(Node u) const;
 
 
 private:
