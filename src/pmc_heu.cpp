@@ -1,7 +1,6 @@
 #include "pmc_heu.h"
 
 #include <numeric>
-#include <iostream>
 
 
 namespace kcm 
@@ -66,7 +65,6 @@ std::vector<Node> find_heuristic_clique(const Graph &g, const KCore &k)
         });
 
         if(C_k_core > max_clique_size) {
-            std::cout << "Maximum Clique incraesed " << C_k_core << std::endl;
             max_clique_size = C_k_core;
             H = C;
         }
