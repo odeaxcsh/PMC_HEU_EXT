@@ -5,6 +5,8 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+
+#include <chrono>
 #include <numeric>
 #include <cmath>
 #include <set>
@@ -75,21 +77,32 @@ read_points(
 
     auto g = kcm::Graph(n_assoc);
 
+    auto start = std::chrono::high_resolution_clock::now();
     int count = 0;
+    double sum = 0;
     for(int i = 0; i < n_assoc; ++i) {
         for(int j = 0; j < n_assoc; ++j) {
             float d = distance(sample_points[i % m], sample_points[j % m]);
             float d_p = distance(reference_points[i / m], reference_points[j / m]);
-            float conssitency = std::exp(sigma * -std::abs(d - d_p));
+            float conssitency = std::exp(-sigma * std::abs(d - d_p));
             if(conssitency > threshold) {
                 g.add_edge(i, j, binary ? 1 : conssitency);
                 ++count;
+                sum += binary ? 1 : conssitency;
             }
         }
     }
+    auto end = std::chrono::high_resolution_clock::now();
+
 
     std::cout << "NUMBER OF EDGES: " << count << std::endl;
     std::cout << "GRAPH DENSITY: " << std::fixed << std::setprecision(4) << float(count) / (n_assoc * (n_assoc - 1)) << std::endl;
+    std::cout << "WEIGHTED DENSITY: " << std::fixed << std::setprecision(4) << sum / (n_assoc * (n_assoc - 1)) << std::endl;
+
+    std::cout << std::endl;
+
+    std::cout << "Finding Maximum Clique took: " <<
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << std::endl;
     std::cout << std::endl;
 
     int gt_n;
@@ -170,16 +183,22 @@ int main(int argc, char **argv)
         std::tie(g, true_association) = read_points(reference, sample, gt);
     }
 
-
+    auto start = std::chrono::high_resolution_clock::now();
     kcm::KCore k(g);
+    auto end = std::chrono::high_resolution_clock::now();
 
-    std::vector<kcm::Node> ordered_nodes(g.size(), 0);
-    std::iota(ordered_nodes.begin(), ordered_nodes.end(), 0);
-    std::stable_sort(ordered_nodes.begin(), ordered_nodes.end(), [&](auto u, auto v){
-        return k.get(u) > k.get(v);
-    });
+    std::cout << "Calculating K core numbers took: " <<
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << std::endl;
 
+
+    start = std::chrono::high_resolution_clock::now();
     auto H = kcm::find_heuristic_clique(g, k);
+    end = std::chrono::high_resolution_clock::now();
+
+    std::cout << "Finding Maximum Clique took: " <<
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << std::endl;
+    std::cout << std::endl;
+
     std::sort(H.begin(), H.end());
 
     std::sort(true_association.begin(), true_association.end());
