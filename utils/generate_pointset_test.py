@@ -9,8 +9,8 @@ BOUNDING_BOX = [100] * 3
 
 
 N_ASSOCIATIONS = 100
-INLIERS = 50
-OUTLIERS = 50
+INLIERS = 1000
+OUTLIERS = 10
 
 MAX_TRANSLATION_AMOUNT = [100, 100, 100]
 
@@ -42,7 +42,6 @@ m = 1
 threshold = 0.1
 consistency_matrix = np.exp(m * -np.abs(original_distance_matrix - transformed_distance_matrix))
 consistency_matrix[consistency_matrix < threshold] = 0
-
 
 X = np.arange(N_ASSOCIATIONS)
 consistency_matrix[X, X] = 0

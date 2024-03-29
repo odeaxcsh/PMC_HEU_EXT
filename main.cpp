@@ -11,6 +11,17 @@
 #include <cmath>
 #include <set>
 
+#define PBSTR "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+#define PBWIDTH 180
+
+void printProgress(double percentage) {
+    int val = (int) (percentage * 100);
+    int lpad = (int) (percentage * PBWIDTH);
+    int rpad = PBWIDTH - lpad;
+    printf("\r%3d%% [%.*s%*s]", val, lpad, PBSTR, rpad, "");
+    fflush(stdout);
+}
+
 
 std::pair<kcm::Graph, std::vector<kcm::Node>> read_graph(std::ifstream &file)
 {
@@ -19,15 +30,39 @@ std::pair<kcm::Graph, std::vector<kcm::Node>> read_graph(std::ifstream &file)
 
     kcm::Graph g(n);
 
+    std::cout << "Number OF NODES: " << n << std::endl;
+
+    int edges = 0;
+    float sum = 0;
+
+    auto start = std::chrono::high_resolution_clock::now();
     float w;
+    
     for(int i = 0; i < n; ++i) {
+        if(i % 10 == 0) {
+            printProgress((double) i / n);
+        }
         for(int j = 0; j < n; ++j) {
             file >> w;
             if(w > 0) {
                 g.add_edge(i, j, w);
+                edges += 1;
+                sum += w;
             }
         }
     }
+    auto end = std::chrono::high_resolution_clock::now();
+
+    std::cout << std::endl;
+    std::cout << "NUMBER OF EDGES: " << edges << std::endl;
+    std::cout << "GRAPH DENSITY: " << std::fixed << std::setprecision(4) << float(edges) / (n * (n - 1)) << std::endl;
+    std::cout << "WEIGHTED DENSITY: " << std::fixed << std::setprecision(4) << sum / (n * (n - 1)) << std::endl;
+    std::cout << std::endl;
+
+    std::cout << "Constructing Graph took: " <<
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << std::endl;
+    std::cout << std::endl;
+
 
     file >> n;
     std::vector<kcm::Node> true_association;
@@ -43,7 +78,7 @@ std::pair<kcm::Graph, std::vector<kcm::Node>> read_graph(std::ifstream &file)
 std::pair<kcm::Graph, std::vector<kcm::Node>> 
 read_points(
     std::ifstream &reference, std::ifstream &sample, std::ifstream &gt, 
-    float threshold = 0.05, float sigma = 1, bool binary = false
+    float threshold = 0.5, float sigma = 1, bool binary = false
 ) {
     int n, m;
     reference >> n;
@@ -80,11 +115,16 @@ read_points(
     auto start = std::chrono::high_resolution_clock::now();
     int count = 0;
     double sum = 0;
+
     for(int i = 0; i < n_assoc; ++i) {
         for(int j = 0; j < n_assoc; ++j) {
+            if(i % m == j % m or i / m == j / m) {
+                continue;
+            }
+
             float d = distance(sample_points[i % m], sample_points[j % m]);
             float d_p = distance(reference_points[i / m], reference_points[j / m]);
-            float conssitency = std::exp(-sigma * std::abs(d - d_p));
+            float conssitency = std::exp(-sigma * (d - d_p) * (d - d_p));
             if(conssitency > threshold) {
                 g.add_edge(i, j, binary ? 1 : conssitency);
                 ++count;
@@ -92,6 +132,7 @@ read_points(
             }
         }
     }
+
     auto end = std::chrono::high_resolution_clock::now();
 
 
@@ -101,7 +142,7 @@ read_points(
 
     std::cout << std::endl;
 
-    std::cout << "Finding Maximum Clique took: " <<
+    std::cout << "Constructing Graph took: " <<
         std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << std::endl;
     std::cout << std::endl;
 
@@ -141,7 +182,7 @@ std::pair<float, float> precition_recall(std::vector<kcm::Node> retrieved, std::
 int main(int argc, char **argv)
 {
     if(argc < 2) {
-        std::cerr << "Usage: " << argv[0] << "input_file" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " input_file" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -153,7 +194,7 @@ int main(int argc, char **argv)
         std::ifstream data_file;
         data_file.open(argv[1]);
         if(!data_file.is_open()) {
-            std::cerr << "File " << argv[1] << "doesn't exist" << std::endl;
+            std::cerr << "File " << argv[1] << " doesn't exist" << std::endl;
             return EXIT_FAILURE;
         }
 
@@ -186,6 +227,19 @@ int main(int argc, char **argv)
     auto start = std::chrono::high_resolution_clock::now();
     kcm::KCore k(g);
     auto end = std::chrono::high_resolution_clock::now();
+
+    std::vector<kcm::Node> ordered_nodes(g.size(), 0);
+    std::iota(ordered_nodes.begin(), ordered_nodes.end(), 0);
+
+    std::stable_sort(ordered_nodes.begin(), ordered_nodes.end(), [&](auto i, auto j){
+        return k.get(i) > k.get(j);
+    });
+
+    std::cout << "Biggest K numbers: " << std::endl;
+    for(int i = 0; i < std::min(g.size(), (size_t)10); ++i) {
+        std::cout << std::fixed << std::setprecision(1) << k.get(ordered_nodes[i]) << " ";
+    }
+    std::cout << std::endl;
 
     std::cout << "Calculating K core numbers took: " <<
         std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << std::endl;

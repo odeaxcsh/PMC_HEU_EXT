@@ -19,7 +19,7 @@ std::vector<Node> find_heuristic_clique(const Graph &g, const KCore &k)
     std::vector<Node> H;
     Weight max_clique_size = 0;   
     for(auto u : ordered_nodes) {
-        if(k.get(u) < max_clique_size) {
+        if(k.get(u) <= max_clique_size) {
             continue;
         }
 
@@ -29,7 +29,7 @@ std::vector<Node> find_heuristic_clique(const Graph &g, const KCore &k)
         std::vector<Weight> cd = { 0 }; // core numbers of G[C]
 
         auto S = g.neighbor_nodes(u);
-        std::erase_if(S, [=](auto node){ return k.get(node) < max_clique_size; });
+        std::erase_if(S, [=](auto node){ return k.get(node) <= max_clique_size; });
         std::sort(S.begin(), S.end(), [&](Node u, Node v){ 
             return k.get(u) > k.get(v); 
         });
@@ -59,10 +59,6 @@ std::vector<Node> find_heuristic_clique(const Graph &g, const KCore &k)
             cd.push_back(induced_degree);
             C_k_core = *std::min_element(cd.cbegin(), cd.cend());
         }
-
-        Node least_core_number_vertex = *std::min_element(C.cbegin(), C.cend(), [&](const auto u, const auto v) {
-            return k.get(u) < k.get(v);
-        });
 
         if(C_k_core > max_clique_size) {
             max_clique_size = C_k_core;
